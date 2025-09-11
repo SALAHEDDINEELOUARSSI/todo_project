@@ -120,6 +120,7 @@ export const schema = z.object({
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { deleteTask, updateTask } from "@/lib/api";
 
+import  { useState } from "react";
 
 
 
@@ -236,6 +237,7 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
     cell: ({ row }) => {
       const task = row.original;
       const queryClient = useQueryClient();
+      const [open, setOpen] = useState(false); // ✅ placé correctement
 
       const deleteMutation = useMutation({
         mutationFn: deleteTask,
@@ -244,13 +246,6 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
         },
       });
 
-      const updateMutation = useMutation({
-        mutationFn: ({ id, values }: { id: number; values: any }) =>
-            updateTask(id, values),
-        onSuccess: () => {
-          queryClient.invalidateQueries({ queryKey: ["task"] });
-        },
-      });
       return (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -263,27 +258,30 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
                 <span className="sr-only">Open menu</span>
               </Button>
             </DropdownMenuTrigger>
+
             <DropdownMenuContent align="end" className="w-32">
-              {/* Edit */}
-              <Dialog>
+              {/* EDIT */}
+              <Dialog open={open} onOpenChange={setOpen}>
                 <DialogTrigger asChild>
-                  <DropdownMenuItem onSelect={(e) => e.preventDefault()}>Edit</DropdownMenuItem>
+                  <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                    Edit
+                  </DropdownMenuItem>
                 </DialogTrigger>
                 <DialogContent>
                   <DialogHeader>
                     <DialogTitle>Edit Task</DialogTitle>
                   </DialogHeader>
-                  {/* Ton formulaire pré-rempli */}
                   <FormTask
-                      defaultValues={task}
-                      onSubmit={(values) =>
-                          updateMutation.mutate({ id: task.id, values })
-                      }
+                      initialData={{
+                        ...task,
+                        dueDate: task.dueDate ? new Date(task.dueDate) : new Date(),
+                      }}
+                      onClose={() => setOpen(false)} // ✅ ferme après update
                   />
                 </DialogContent>
               </Dialog>
 
-              {/* Delete */}
+              {/* DELETE */}
               <DropdownMenuSeparator />
               <DropdownMenuItem
                   variant="destructive"
@@ -296,6 +294,7 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
       );
     },
   }
+
 ,
 ]
 

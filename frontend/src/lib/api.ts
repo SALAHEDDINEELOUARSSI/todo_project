@@ -23,15 +23,12 @@ export async function deleteTask(taskId: number) {
 
     return true;
 }
-export async function updateTask(taskId: number, updatedTask: any) {
-    const res = await fetch(`http://localhost:8033/api/tasks/${taskId}`, {
+export const updateTask = async (task) => {
+    const res = await fetch(`/api/tasks/${task.id}`, {
         method: "PUT",
-        body: JSON.stringify(updatedTask),
         headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(task),
     });
-
-    if (!res.ok) {
-        throw new Error("Erreur lors de la mise à jour");
-    }
+    if (!res.ok) throw new Error("Failed to update task");
     return res.json();
-}
+};
