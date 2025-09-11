@@ -117,6 +117,11 @@ export const schema = z.object({
   limit: z.string(),
   reviewer: z.string(),
 })
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { deleteTask, updateTask } from "@/lib/api";
+
+
+
 
 function DragHandle({ id }: { id: number }) {
   const { attributes, listeners } = useSortable({
@@ -228,28 +233,70 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
   },
   {
     id: "actions",
-    cell: () => (
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="ghost"
-            className="data-[state=open]:bg-muted text-muted-foreground flex size-8"
-            size="icon"
-          >
-            <IconDotsVertical />
-            <span className="sr-only">Open menu</span>
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-32">
-          <DropdownMenuItem>Edit</DropdownMenuItem>
-          <DropdownMenuItem>Make a copy</DropdownMenuItem>
-          <DropdownMenuItem>Favorite</DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem variant="destructive">Delete</DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    ),
-  },
+    cell: ({ row }) => {
+      const task = row.original;
+      const queryClient = useQueryClient();
+
+      const deleteMutation = useMutation({
+        mutationFn: deleteTask,
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: ["task"] });
+        },
+      });
+
+      const updateMutation = useMutation({
+        mutationFn: ({ id, values }: { id: number; values: any }) =>
+            updateTask(id, values),
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: ["task"] });
+        },
+      });
+      return (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                  variant="ghost"
+                  className="data-[state=open]:bg-muted text-muted-foreground flex size-8"
+                  size="icon"
+              >
+                <IconDotsVertical />
+                <span className="sr-only">Open menu</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-32">
+              {/* Edit */}
+              <Dialog>
+                <DialogTrigger asChild>
+                  <DropdownMenuItem>Edit</DropdownMenuItem>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Edit Task</DialogTitle>
+                  </DialogHeader>
+                  {/* Ton formulaire pré-rempli */}
+                  <FormTask
+                      defaultValues={task}
+                      onSubmit={(values) =>
+                          updateMutation.mutate({ id: task.id, values })
+                      }
+                  />
+                </DialogContent>
+              </Dialog>
+
+              {/* Delete */}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                  variant="destructive"
+                  onClick={() => deleteMutation.mutate(task.id)}
+              >
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+      );
+    },
+  }
+,
 ]
 
 function DraggableRow({ row }: { row: Row<z.infer<typeof schema>> }) {
@@ -278,11 +325,10 @@ function DraggableRow({ row }: { row: Row<z.infer<typeof schema>> }) {
 }
 
 export function DataTable({
-  data: initialData,
+  data
 }: {
   data: z.infer<typeof schema>[]
 }) {
-  const [data, setData] = React.useState(() => initialData)
   const [rowSelection, setRowSelection] = React.useState({})
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({})

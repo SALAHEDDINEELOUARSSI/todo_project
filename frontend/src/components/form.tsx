@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import {addTask} from "@/lib/api";
+import { addTask, updateTask } from "@/lib/api";
 
 import { Button } from "@/components/ui/button"
 import {
@@ -14,7 +14,6 @@ import {
     FormItem,
     FormLabel,
     FormMessage,
-    FormDescription,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -22,8 +21,10 @@ import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 
 import { format } from "date-fns"
+import { useEffect } from "react"
 
 const todoSchema = z.object({
+    id: z.number().optional(), // ⚠️ obligatoire si EDIT
     title: z.string().min(2, { message: "Title must be at least 2 characters" }),
     description: z.string().optional(),
     status: z.enum(["Todo", "In Progress", "Done"]),
@@ -33,7 +34,7 @@ const todoSchema = z.object({
 
 type TodoFormType = z.infer<typeof todoSchema>
 
-export  function FormTask() {
+export function FormTask({ initialData, onClose }: { initialData?: TodoFormType, onClose?: () => void }) {
     const form = useForm<TodoFormType>({
         resolver: zodResolver(todoSchema),
         defaultValues: {
@@ -44,24 +45,43 @@ export  function FormTask() {
             dueDate: new Date(),
         },
     })
+
+    // ⚡ Quand initialData change → reset le form
+    useEffect(() => {
+        if (initialData) {
+            form.reset(initialData)
+        }
+    }, [initialData, form])
+
     const queryClient = useQueryClient();
 
-    const mutation = useMutation({
+    const addMutation = useMutation({
         mutationFn: addTask,
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["Tasks"] });
+            queryClient.invalidateQueries({ queryKey: ["task"] })
+            onClose?.()
         },
     });
+
+    const updateMutation = useMutation({
+        mutationFn: updateTask,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["task"] })
+            onClose?.()
+        },
+    });
+
     const onSubmit = (values: TodoFormType) => {
-        mutation.mutate({
-            ...values,
-            userId: 2,
-        });
-    };
+        if (values.id) {
+            updateMutation.mutate(values)
+        } else {
+            addMutation.mutate({ ...values, userId: 2 })
+        }
+    }
 
     return (
         <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6  ">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                 <FormField
                     control={form.control}
                     name="title"
@@ -163,7 +183,9 @@ export  function FormTask() {
                     )}
                 />
 
-                <Button type="submit" className="w-full">Add Task</Button>
+                <Button type="submit" className="w-full">
+                    {initialData ? "Update Task" : "Add Task"}
+                </Button>
             </form>
         </Form>
     )

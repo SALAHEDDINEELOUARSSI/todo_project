@@ -28,7 +28,6 @@ export default function Page() {
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ["task"],
     queryFn: getTasks,
-    staleTime: 1000 * 60,
   });
 
   if (isLoading) return <p>Chargement...</p>;

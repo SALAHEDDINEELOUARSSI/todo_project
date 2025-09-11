@@ -11,14 +11,7 @@ export async function addTask(newTask: { title: string }) {
     });
     return res.json();
 }
-export async function DeleteTask(newTask: { title: string }) {
-    const res = await fetch("http://localhost:8033/api/tasks/user/", {
-        method: "POST",
-        body: JSON.stringify(newTask),
-        headers: { "Content-Type": "application/json" },
-    });
-    return res.json();
-}
+
 export async function deleteTask(taskId: number) {
     const res = await fetch(`http://localhost:8033/api/tasks/${taskId}`, {
         method: "DELETE",
