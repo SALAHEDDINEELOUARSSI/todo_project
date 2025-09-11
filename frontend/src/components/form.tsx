@@ -3,6 +3,8 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import {addTask} from "@/lib/api";
 
 import { Button } from "@/components/ui/button"
 import {
@@ -42,10 +44,20 @@ export  function FormTask() {
             dueDate: new Date(),
         },
     })
+    const queryClient = useQueryClient();
 
+    const mutation = useMutation({
+        mutationFn: addTask,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["Tasks"] });
+        },
+    });
     const onSubmit = (values: TodoFormType) => {
-        console.log("To-Do Values:", values)
-    }
+        mutation.mutate({
+            ...values,
+            userId: 2,
+        });
+    };
 
     return (
         <Form {...form}>

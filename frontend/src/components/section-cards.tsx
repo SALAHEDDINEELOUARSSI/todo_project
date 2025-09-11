@@ -17,7 +17,7 @@ export function SectionCards() {
         <CardHeader>
           <CardDescription>Total Task</CardDescription>
           <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-           250.00
+           25
           </CardTitle>
           <CardAction>
             <Badge variant="outline">
@@ -37,7 +37,7 @@ export function SectionCards() {
         <CardHeader>
           <CardDescription>Task Done</CardDescription>
           <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-           234
+           23
           </CardTitle>
           <CardAction>
             <Badge variant="outline">
@@ -75,7 +75,7 @@ export function SectionCards() {
         <CardHeader>
           <CardDescription>Task todo</CardDescription>
           <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-           122
+           12
           </CardTitle>
           <CardAction>
             <Badge variant="outline">
