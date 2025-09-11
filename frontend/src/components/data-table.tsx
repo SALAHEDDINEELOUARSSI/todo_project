@@ -227,7 +227,7 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
     cell: ({ row }) => (
         <Badge variant="outline" className="text-muted-foreground px-1.5">
 
-          {row.original.description}
+          {row.original.dueDate}
         </Badge>
     ),
   },
@@ -267,7 +267,7 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
               {/* Edit */}
               <Dialog>
                 <DialogTrigger asChild>
-                  <DropdownMenuItem>Edit</DropdownMenuItem>
+                  <DropdownMenuItem onSelect={(e) => e.preventDefault()}>Edit</DropdownMenuItem>
                 </DialogTrigger>
                 <DialogContent>
                   <DialogHeader>

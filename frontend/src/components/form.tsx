@@ -24,7 +24,7 @@ import { format } from "date-fns"
 import { useEffect } from "react"
 
 const todoSchema = z.object({
-    id: z.number().optional(), // ⚠️ obligatoire si EDIT
+    id: z.number().optional(), // utilisé pour EDIT
     title: z.string().min(2, { message: "Title must be at least 2 characters" }),
     description: z.string().optional(),
     status: z.enum(["Todo", "In Progress", "Done"]),
@@ -34,7 +34,13 @@ const todoSchema = z.object({
 
 type TodoFormType = z.infer<typeof todoSchema>
 
-export function FormTask({ initialData, onClose }: { initialData?: TodoFormType, onClose?: () => void }) {
+export function FormTask({
+                             initialData,
+                             onClose,
+                         }: {
+    initialData?: TodoFormType
+    onClose?: () => void
+}) {
     const form = useForm<TodoFormType>({
         resolver: zodResolver(todoSchema),
         defaultValues: {
@@ -46,14 +52,19 @@ export function FormTask({ initialData, onClose }: { initialData?: TodoFormType,
         },
     })
 
-    // ⚡ Quand initialData change → reset le form
+    // ⚡ Préremplir quand initialData change
     useEffect(() => {
         if (initialData) {
-            form.reset(initialData)
+            form.reset({
+                ...initialData,
+                dueDate: initialData.dueDate
+                    ? new Date(initialData.dueDate)
+                    : new Date(),
+            })
         }
     }, [initialData, form])
 
-    const queryClient = useQueryClient();
+    const queryClient = useQueryClient()
 
     const addMutation = useMutation({
         mutationFn: addTask,
@@ -61,7 +72,7 @@ export function FormTask({ initialData, onClose }: { initialData?: TodoFormType,
             queryClient.invalidateQueries({ queryKey: ["task"] })
             onClose?.()
         },
-    });
+    })
 
     const updateMutation = useMutation({
         mutationFn: updateTask,
@@ -69,12 +80,14 @@ export function FormTask({ initialData, onClose }: { initialData?: TodoFormType,
             queryClient.invalidateQueries({ queryKey: ["task"] })
             onClose?.()
         },
-    });
+    })
 
     const onSubmit = (values: TodoFormType) => {
         if (values.id) {
+            // mode EDIT
             updateMutation.mutate(values)
         } else {
+            // mode ADD
             addMutation.mutate({ ...values, userId: 2 })
         }
     }
@@ -82,6 +95,7 @@ export function FormTask({ initialData, onClose }: { initialData?: TodoFormType,
     return (
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                {/* Title */}
                 <FormField
                     control={form.control}
                     name="title"
@@ -96,6 +110,7 @@ export function FormTask({ initialData, onClose }: { initialData?: TodoFormType,
                     )}
                 />
 
+                {/* Description */}
                 <FormField
                     control={form.control}
                     name="description"
@@ -110,6 +125,7 @@ export function FormTask({ initialData, onClose }: { initialData?: TodoFormType,
                     )}
                 />
 
+                {/* Status */}
                 <FormField
                     control={form.control}
                     name="status"
@@ -117,7 +133,11 @@ export function FormTask({ initialData, onClose }: { initialData?: TodoFormType,
                         <FormItem>
                             <FormLabel>Status</FormLabel>
                             <FormControl>
-                                <Select onValueChange={field.onChange} value={field.value}>
+                                <Select
+                                    onValueChange={field.onChange}
+                                    value={field.value}
+                                    defaultValue="Todo"
+                                >
                                     <SelectTrigger>
                                         <SelectValue placeholder="Select status" />
                                     </SelectTrigger>
@@ -133,6 +153,7 @@ export function FormTask({ initialData, onClose }: { initialData?: TodoFormType,
                     )}
                 />
 
+                {/* Priority */}
                 <FormField
                     control={form.control}
                     name="priority"
@@ -140,7 +161,11 @@ export function FormTask({ initialData, onClose }: { initialData?: TodoFormType,
                         <FormItem>
                             <FormLabel>Priority</FormLabel>
                             <FormControl>
-                                <Select onValueChange={field.onChange} value={field.value}>
+                                <Select
+                                    onValueChange={field.onChange}
+                                    value={field.value}
+                                    defaultValue="Medium"
+                                >
                                     <SelectTrigger>
                                         <SelectValue placeholder="Select priority" />
                                     </SelectTrigger>
@@ -156,6 +181,7 @@ export function FormTask({ initialData, onClose }: { initialData?: TodoFormType,
                     )}
                 />
 
+                {/* Due Date */}
                 <FormField
                     control={form.control}
                     name="dueDate"
@@ -166,7 +192,9 @@ export function FormTask({ initialData, onClose }: { initialData?: TodoFormType,
                                 <PopoverTrigger asChild>
                                     <FormControl>
                                         <Button variant="outline">
-                                            {field.value ? format(field.value, "PPP") : "Select date"}
+                                            {field.value
+                                                ? format(field.value, "PPP")
+                                                : "Select date"}
                                         </Button>
                                     </FormControl>
                                 </PopoverTrigger>
@@ -183,6 +211,7 @@ export function FormTask({ initialData, onClose }: { initialData?: TodoFormType,
                     )}
                 />
 
+                {/* Submit */}
                 <Button type="submit" className="w-full">
                     {initialData ? "Update Task" : "Add Task"}
                 </Button>
@@ -190,3 +219,4 @@ export function FormTask({ initialData, onClose }: { initialData?: TodoFormType,
         </Form>
     )
 }
+
